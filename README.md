@@ -20,7 +20,7 @@ Usage:
         dic2.put("/Users/shwu", "Blah");
         ChainedProperties cp = EnvAwareProperties.chainedPropertiesOf(dict, dic1, dic2);
 
-				// You can create envaware properties from ordinary properties as well
+        // You can create envaware properties from ordinary properties as well
         // You can chain properties here, in order of resolution
         EnvAwareProperties ep = new EnvAwareProperties(cp);
 

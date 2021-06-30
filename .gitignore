@@ -25,3 +25,7 @@ hs_err_pid*
 build
 .gradle
 
+.idea
+gradle
+gradlew
+gradlew.bat

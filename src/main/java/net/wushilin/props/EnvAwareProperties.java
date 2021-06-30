@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 public class EnvAwareProperties extends Properties {
     private Properties env = null;
+    // Threshold when CircularReferenceException will be thrown
     private static final int MAX_DEPTH = 500;
     /**
      * Create a EnvAwareProperties using base properties.
@@ -23,26 +24,54 @@ public class EnvAwareProperties extends Properties {
         this.env = chainedPropertiesOf(defaults, sysProps(), sysEnv());
     }
 
+    /**
+     * Same as fromFile, but getting path as string
+     * @param path Path of file
+     */
     public static EnvAwareProperties fromPath(String path) throws IOException {
         return fromFile(new java.io.File(path));
     }
+
+    /**
+     * Load properties from File
+     * @param input the file to load from
+     * @return EnvAwareProperties (will mix with system env, sytem properties)
+     * @throws IOException If IO Exception happened
+     */
     public static EnvAwareProperties fromFile(java.io.File input) throws IOException {
         try(FileInputStream fis = new FileInputStream(input)) {
             return fromInputStream(fis);
         }
     }
 
+    /**
+     * Load properties from inputStream
+     * @param is the stream to load from
+     * @return EnvAwareProperties (will mix with system env, sytem properties)
+     * @throws IOException If IO Exception happened
+     */
     public static EnvAwareProperties fromInputStream(InputStream is) throws IOException {
         Properties base = new Properties();
         base.load(is);
         return new EnvAwareProperties(base);
     }
 
+    /**
+     * Load properties from classpath
+     * @param path Path of classpath
+     * @return EnvAwareProperties (will mix with system env, sytem properties)
+     * @throws IOException If IO Exception happened
+     */
     public static EnvAwareProperties fromClassPath(String path) throws IOException {
         try(InputStream is = EnvAwareProperties.class.getResourceAsStream(path)) {
             return fromInputStream(is);
         }
     }
+
+    /**
+     * Get the environment of this properties
+     * @return The environment
+     */
     public Properties getEnv() {
         return env;
     }
@@ -55,11 +84,6 @@ public class EnvAwareProperties extends Properties {
     public static ChainedProperties chainedPropertiesOf(Properties p0, Properties...p) {
         return new ChainedProperties(p0, p);
     }
-
-    /**
-     * Set the resolution dictionary for this properties
-     * @param env The environment properties
-     */
 
     /**
      * Get property from this properties, with ${variable} resolved to the value of variable in dictionary.
@@ -89,10 +113,18 @@ public class EnvAwareProperties extends Properties {
         return result;
     }
 
+    /**
+     * Convenient method to get system Properties as a new Properties
+     * @return System properties as Properties (not new, a copy of System.getProperties())
+     */
     public static Properties sysProps() {
         return System.getProperties();
     }
 
+    /**
+     * Convenient method to get system environment as a new Properties
+     * @return System environment variables as Properties
+     */
     public static Properties sysEnv() {
         Map<String, String> envMap = System.getenv();
         Properties p = new Properties();
@@ -184,8 +216,7 @@ class ChainedProperties extends Properties {
 
     /**
      * Resolve the property in chained order
-     * @param key
-     * @return
+     * see #Properties.getProperty(String key)
      */
     @Override
     public String getProperty(String key) {
