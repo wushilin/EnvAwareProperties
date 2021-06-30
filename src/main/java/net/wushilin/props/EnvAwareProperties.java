@@ -25,11 +25,23 @@ public class EnvAwareProperties extends Properties {
         Set<String> keys = new HashSet<String>();
         List<Properties> list = new ArrayList<>();
         list.addAll(Arrays.asList(defaults));
-        list.add(sysProps());
-        list.add(sysEnv());
+        List<Object> extraKeys = new ArrayList<>();
+        List<Properties> extraList = new ArrayList<>();
+
+        extraList.add(sysProps());
+        extraList.add(sysEnv());
         for(Properties next:list) {
             for(Object nextKey:next.keySet()) {
                 resolved.putIfAbsent(nextKey, next.get(nextKey));
+                keys.add((String)nextKey);
+            }
+        }
+        for(Properties next:extraList) {
+            for(Object nextKey:next.keySet()) {
+                if(!resolved.containsKey(nextKey)) {
+                    extraKeys.add(nextKey);
+                    resolved.put(nextKey, next.get(nextKey));
+                }
                 keys.add((String)nextKey);
             }
         }
@@ -43,6 +55,9 @@ public class EnvAwareProperties extends Properties {
             }
             setProperty(resolvedKey, resolvedValue);
             setProperty(nextKey, resolvedValue);
+        }
+        for(Object extraK:extraKeys) {
+            remove(extraK);
         }
     }
 
@@ -213,7 +228,6 @@ public class EnvAwareProperties extends Properties {
     }
 
     public static void main(String[] args) {
-        String raw = "hello ${${key.1}}";
         Properties dict = new Properties();
         dict.put("key.1", "${key.2}");
         dict.put("key.2", "${key.1}");
