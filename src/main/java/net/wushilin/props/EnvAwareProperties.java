@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EnvAwareProperties extends Properties {
-    private ChainedProperties env = null;
     // Threshold when CircularReferenceException will be thrown
     private static final int MAX_DEPTH = 500;
     /**
@@ -22,10 +21,29 @@ public class EnvAwareProperties extends Properties {
      *            and it will be resolved as much as we can!
      */
     public EnvAwareProperties(Properties ...defaults) {
-        super(defaults[0]);
-        this.env = chainedPropertiesOf(defaults);
-        env.append(sysProps());
-        env.append(sysEnv());
+        Properties resolved = new Properties();
+        Set<String> keys = new HashSet<String>();
+        List<Properties> list = new ArrayList<>();
+        list.addAll(Arrays.asList(defaults));
+        list.add(sysProps());
+        list.add(sysEnv());
+        for(Properties next:list) {
+            for(Object nextKey:next.keySet()) {
+                resolved.putIfAbsent(nextKey, next.get(nextKey));
+                keys.add((String)nextKey);
+            }
+        }
+
+        for(String nextKey:keys) {
+            String resolvedKey = resolveEnv(nextKey, resolved);
+            String valueRaw = resolved.getProperty(resolvedKey);
+            String resolvedValue = resolveEnv(valueRaw, resolved);
+            if(nextKey.indexOf("$") != -1) {
+                System.out.println("" + nextKey);
+            }
+            setProperty(resolvedKey, resolvedValue);
+            setProperty(nextKey, resolvedValue);
+        }
     }
 
     /**
@@ -126,51 +144,7 @@ public class EnvAwareProperties extends Properties {
         }
     }
 
-    /**
-     * Get the environment of this properties
-     * @return The environment
-     */
-    public ChainedProperties getEnv() {
-        return env;
-    }
 
-
-    /**
-     * Create a chained properties where resolve order of the chain.
-     * @param p The properties list in the resolution order
-     * @return The chained property, earlier properties will be resolved first
-     */
-    public static ChainedProperties chainedPropertiesOf(Properties...p) {
-        return new ChainedProperties(p);
-    }
-
-    /**
-     * Get property from this properties, with ${variable} resolved to the value of variable in dictionary.
-     * The resolution is recursive. you can have ${${key}} => value2 if in dict key = blah, blah = value2.
-     * @param key The key to lookup. The key is also resolved! ${key} = 12 if key=blah and blah=12
-     * @return The resolved value
-     */
-    @Override
-    public String getProperty(String key) {
-        return getProperty(key, null);
-    }
-
-    /**
-     * Same as getProperty, but with a default value
-     * @param key The key to lookup. The key is also resolved!
-     * @param defaultValue The default value if resolve result is null
-     * @return The resolved value
-     */
-    @Override
-    public String getProperty(String key, String defaultValue) {
-        String keyResolved = resolveEnv(key, env);
-        String valueRaw = env.getProperty(keyResolved);
-        String result = resolveEnv(valueRaw, env);
-        if(result == null) {
-            return defaultValue;
-        }
-        return result;
-    }
 
     /**
      * Convenient method to get system Properties as a new Properties
@@ -224,6 +198,20 @@ public class EnvAwareProperties extends Properties {
         }
     }
 
+    public String getPropertyResolve(String key) {
+        return getPropertyResolve(key, null);
+    }
+
+    public String getPropertyResolve(String key, String defaultValue) {
+        String keyResolved = resolveEnv(key, this);
+        String valueRaw = this.getProperty(keyResolved);
+        String result = resolveEnv(valueRaw, this);
+        if(result == null) {
+            return defaultValue;
+        }
+        return result;
+    }
+
     public static void main(String[] args) {
         String raw = "hello ${${key.1}}";
         Properties dict = new Properties();
@@ -236,16 +224,17 @@ public class EnvAwareProperties extends Properties {
 
         Properties dic2 = new Properties();
         dic2.put("key.1", "value.32");
-        dic2.put("key.33", "${java.class.path}");
-        dic2.put("key.44", "key.33");
+        dic2.put("key.33", "java.class.path");
+        dic2.put("key.44", "${${key.33}}");
         dic2.put("/Users/shwu", "Blah");
-        ChainedProperties cp = chainedPropertiesOf(dict, dic1, dic2);
 
-        EnvAwareProperties ep = new EnvAwareProperties(cp);
+        EnvAwareProperties ep = new EnvAwareProperties(dict, dic1, dic2);
         System.out.println(ep.getProperty("key.1"));
         System.out.println(ep.getProperty("LANG"));
-        System.out.println(ep.getProperty("${user.home}"));
-        System.out.println(ep.getEnv());
+        System.out.println(ep.getProperty("key.44"));
+        for(var next:ep.entrySet()) {
+            System.out.println(next.getKey() + " => " + next.getValue());
+        }
     }
 }
 
@@ -258,72 +247,4 @@ class CircularReferenceException extends Exception {
         super(msg);
     }
 }
-/**
- * A chained properties.
- * All methods will be delegated to first Properties in chain, except for getProperty(key), getProperty(key, default)
- *
- * Updates will update the first properties
- */
-class ChainedProperties extends Properties {
-    private List<Properties> chain;
-    public ChainedProperties(Properties... ps) {
-        super(ps[0]);
-        chain = new ArrayList<>();
-        chain.addAll(Arrays.asList(ps));
-    }
-
-    /**
-     * Resolve the property in chained order
-     * see #Properties.getProperty(String key)
-     */
-    @Override
-    public String getProperty(String key) {
-        return getProperty(key, null);
-    }
-
-    public Optional<String> getPropertyOptional(String key) {
-        Optional<String> result = Optional.empty();
-        for(Properties next:chain) {
-            String value = next.getProperty(key);
-            if(value != null) {
-                result = result.or(()->Optional.of(value));
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Add resolution chain
-     * @param next The next property to chain up
-     * @return this object
-     */
-    public ChainedProperties append(Properties next) {
-        chain.add(next);
-        return this;
-    }
-
-    /**
-     * Prepend the resolution chain
-     * @param next the new base properties (highest priority). It will also take all writes and modifications
-     * @return this object
-     */
-    public ChainedProperties prepend(Properties next) {
-        chain.add(0, next);
-        return this;
-    }
-    /**
-     * Resolve the property in chained order, with default value
-     * @param  key The key to lookup
-     * @param  defaultValue The default value
-     * @return the resolved property
-     */
-    public String getProperty(String key, String defaultValue) {
-        return getPropertyOptional(key).orElse(defaultValue);
-    }
-
-    public String toString() {
-        return this.chain.toString();
-    }
-}
-
 
