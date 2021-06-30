@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+
+group 'net.wushilin.props'
+version '1.0'
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+dependencies {
+}
