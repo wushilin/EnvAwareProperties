@@ -1,14 +1,16 @@
 package net.wushilin.props;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class EnvAwareProperties extends Properties {
-    private Properties env = null;
+    private ChainedProperties env = null;
     // Threshold when CircularReferenceException will be thrown
     private static final int MAX_DEPTH = 500;
     /**
@@ -19,18 +21,25 @@ public class EnvAwareProperties extends Properties {
      * @param defaults The base properties to lookup. It may contain special place holder like ${key}
      *            and it will be resolved as much as we can!
      */
-    public EnvAwareProperties(Properties defaults) {
-        super(defaults);
-        this.env = chainedPropertiesOf(defaults, sysProps(), sysEnv());
+    public EnvAwareProperties(Properties ...defaults) {
+        super(defaults[0]);
+        this.env = chainedPropertiesOf(defaults);
+        env.append(sysProps());
+        env.append(sysEnv());
     }
 
     /**
      * Same as fromFile, but getting path as string
      * @param path Path of file
      */
-    public static EnvAwareProperties fromPath(String path) throws IOException {
-        return fromFile(new java.io.File(path));
+    public static EnvAwareProperties fromPath(String ...path) throws IOException {
+        java.io.File[] list = new java.io.File[path.length];
+        for(int i = 0; i < path.length; i++) {
+            list[i] = new java.io.File(path[i]);
+        }
+        return fromFile(list);
     }
+
 
     /**
      * Load properties from File
@@ -38,9 +47,29 @@ public class EnvAwareProperties extends Properties {
      * @return EnvAwareProperties (will mix with system env, sytem properties)
      * @throws IOException If IO Exception happened
      */
-    public static EnvAwareProperties fromFile(java.io.File input) throws IOException {
-        try(FileInputStream fis = new FileInputStream(input)) {
-            return fromInputStream(fis);
+    public static EnvAwareProperties fromFile(java.io.File... input) throws IOException {
+        InputStream[] isrs = Arrays.stream(input).map(
+                i -> {
+                    try {
+                        return new FileInputStream(i);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+        ).filter(i -> i != null).collect(Collectors.toList()).toArray(new InputStream[0]);
+        try {
+            return fromInputStream(isrs);
+        } finally {
+            Arrays.stream(isrs).forEach(
+                    i -> {
+                        try {
+                            i.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
         }
     }
 
@@ -50,9 +79,25 @@ public class EnvAwareProperties extends Properties {
      * @return EnvAwareProperties (will mix with system env, sytem properties)
      * @throws IOException If IO Exception happened
      */
-    public static EnvAwareProperties fromInputStream(InputStream is) throws IOException {
-        Properties base = new Properties();
-        base.load(is);
+    public static EnvAwareProperties fromInputStream(InputStream...is) throws IOException {
+        if(is == null || is.length == 0) {
+            throw new IllegalArgumentException("None of the inputs are valid!");
+        }
+        Properties[] base = Arrays.stream(is).filter(i -> i != null).map(
+                i -> {
+                    try {
+                        Properties p = new Properties();
+                        p.load(i);
+                        return p;
+                    } catch(Exception ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
+                }
+        ).filter(i -> i!= null).collect(Collectors.toList()).toArray(new Properties[0]);
+        if(base.length == 0) {
+            throw new IllegalArgumentException("None of the inputs are valid!");
+        }
         return new EnvAwareProperties(base);
     }
 
@@ -62,9 +107,22 @@ public class EnvAwareProperties extends Properties {
      * @return EnvAwareProperties (will mix with system env, sytem properties)
      * @throws IOException If IO Exception happened
      */
-    public static EnvAwareProperties fromClassPath(String path) throws IOException {
-        try(InputStream is = EnvAwareProperties.class.getResourceAsStream(path)) {
-            return fromInputStream(is);
+    public static EnvAwareProperties fromClassPath(String ... path) throws IOException {
+        InputStream[] isrs = Arrays.stream(path).map(
+                i ->  EnvAwareProperties.class.getResourceAsStream(i)
+        ).filter(i -> i != null).collect(Collectors.toList()).toArray(new InputStream[0]);
+        try {
+            return fromInputStream(isrs);
+        } finally {
+            Arrays.stream(isrs).forEach(
+                    i -> {
+                        try {
+                            i.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
         }
     }
 
@@ -72,17 +130,18 @@ public class EnvAwareProperties extends Properties {
      * Get the environment of this properties
      * @return The environment
      */
-    public Properties getEnv() {
+    public ChainedProperties getEnv() {
         return env;
     }
+
 
     /**
      * Create a chained properties where resolve order of the chain.
      * @param p The properties list in the resolution order
      * @return The chained property, earlier properties will be resolved first
      */
-    public static ChainedProperties chainedPropertiesOf(Properties p0, Properties...p) {
-        return new ChainedProperties(p0, p);
+    public static ChainedProperties chainedPropertiesOf(Properties...p) {
+        return new ChainedProperties(p);
     }
 
     /**
@@ -207,11 +266,10 @@ class CircularReferenceException extends Exception {
  */
 class ChainedProperties extends Properties {
     private List<Properties> chain;
-    public ChainedProperties(Properties basic, Properties ...rest) {
-        super(basic);
+    public ChainedProperties(Properties... ps) {
+        super(ps[0]);
         chain = new ArrayList<>();
-        chain.add(basic);
-        chain.addAll(Arrays.asList(rest));
+        chain.addAll(Arrays.asList(ps));
     }
 
     /**
@@ -267,4 +325,5 @@ class ChainedProperties extends Properties {
         return this.chain.toString();
     }
 }
+
 
