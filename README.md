@@ -13,17 +13,27 @@ Usage:
         Properties dic1 = new Properties();
         dic1.put("key.1", "value.3");
         dic1.put("key.3", "value.3");
+        dic1.put("key1", "${key2}");
+        dic1.put("key2", "${key3}");
+        dic1.put("key3", "The real key1 value is here");
 
         Properties dic2 = new Properties();
-        dic2.put("key.1", "value.32");
+        dic2.put("key.1", "value.32");  
         dic2.put("key.33", "java.class.path");
         dic2.put("key.44", "${${key.33}}");
+        dic2.put("appDir", "${user.home}/app01/config");
+
         EnvAwareProperties ep = new EnvAwareProperties(dict, dic1, dic2);
-        System.out.println(ep.getProperty("key.1"));
-        System.out.println(ep.getProperty("LANG"));
-        System.out.println(ep.getProperty("key.44"));
+        System.out.println(ep.getProperty("key.1")); //shows ${key.2} since it has a circular reference!
+        System.out.println(ep.getProperty("key1")); //show "The real key1 value is here" since it is resolved!
+        System.out.println(ep.getProperty("user.home")); // shows user home directory
+        System.out.println(ep.getProperty("key.44")); // shows value of env java.class.path, it resolves the chain!
+        System.out.println(ep.getProperty("appDir")); // shows your_home_dir/app01/config
         for(var next:ep.entrySet()) {
             System.out.println(next.getKey() + " => " + next.getValue());
+            //Lists everything including the dict, dic1, dic2, sysEnv, sysProps!
+            // Order of importance dict > dic1 > dic2 > sysProps > sysEnv!
         }
+
 
 ```
