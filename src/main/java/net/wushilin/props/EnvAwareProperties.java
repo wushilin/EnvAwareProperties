@@ -264,6 +264,8 @@ public class EnvAwareProperties extends Properties {
         dict1.put("key.1", "${key.2}");
         dict1.put("key.2", "${key.1}");
 
+        System.out.println("Hello, world");
+        
         Properties dict2 = new Properties();
         dict2.put("key.1", "value.3"); // key.1 is shadowed by dict
         dict2.put("key.3", "value.3");
