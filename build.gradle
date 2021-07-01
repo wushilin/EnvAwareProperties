@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
 group 'net.wushilin.props'
@@ -11,4 +12,72 @@ repositories {
     mavenCentral()
 }
 dependencies {
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'envawareproperties'
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'envawareproperties'
+                description = 'An environment aware properties'
+                url = 'https://github.com/wushilin/EnvAwareProperties'
+                properties = [
+                    myProp: "value",
+                    "prop.with.dots": "anotherValue"
+                ]
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'shwu'
+                        name = 'Shilin Wu'
+                        email = 'wushilin.sg@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/wushilin/EnvAwareProperties.git'
+                    developerConnection = 'scm:git:https://github.com/wushilin/EnvAwareProperties.git'
+                    url = 'https://github.com/wushilin/EnvAwareProperties'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            // change URLs to point to your repos, e.g. http://my.org/repo
+            def releasesRepoUrl = layout.buildDirectory.dir('repos/releases')
+            def snapshotsRepoUrl = layout.buildDirectory.dir('repos/snapshots')
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
+
+//signing {
+//    sign publishing.publications.mavenJava
+//}
+
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
 }

@@ -9,8 +9,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * EnvAware properties allows you to chain multiple properties, with resolution order,
+ * as well as placing environment varible, as well as reference other config properties
+ * so your properties are not the same ever again!
+ *
+ * Updates to this properties always goes to the flattened (resolved) properties!
+ * After constructor, this is just a plain properties, except that it offers a getPropertyResolve that
+ * does a little bit of magic!
+ */
 public class EnvAwareProperties extends Properties {
-    // Threshold when CircularReferenceException will be thrown
+    /**
+     * This controls max resolution depth where a property is referencing another, the other
+     * properties might reference more other properties.
+     */
     private static final int MAX_DEPTH = 500;
     /**
      * Create a EnvAwareProperties using base properties.
@@ -36,6 +48,10 @@ public class EnvAwareProperties extends Properties {
                 keys.add((String)nextKey);
             }
         }
+
+        /**
+         * Extra env keys will be removed at last
+         */
         for(Properties next:extraList) {
             for(Object nextKey:next.keySet()) {
                 if(!resolved.containsKey(nextKey)) {
@@ -50,9 +66,6 @@ public class EnvAwareProperties extends Properties {
             String resolvedKey = resolveEnv(nextKey, resolved);
             String valueRaw = resolved.getProperty(resolvedKey);
             String resolvedValue = resolveEnv(valueRaw, resolved);
-            if(nextKey.indexOf("$") != -1) {
-                System.out.println("" + nextKey);
-            }
             setProperty(resolvedKey, resolvedValue);
             setProperty(nextKey, resolvedValue);
         }
@@ -62,8 +75,10 @@ public class EnvAwareProperties extends Properties {
     }
 
     /**
-     * Same as fromFile, but getting path as string
-     * @param path Path of file
+     * Same as fromFile, but gettting rom path
+     * @param path Path of files, in order of resolution importance
+     * @return The EnvAwareProperties.
+     * @throws IOException if IO Exception happened
      */
     public static EnvAwareProperties fromPath(String ...path) throws IOException {
         java.io.File[] list = new java.io.File[path.length];
@@ -75,9 +90,9 @@ public class EnvAwareProperties extends Properties {
 
 
     /**
-     * Load properties from File
-     * @param input the file to load from
-     * @return EnvAwareProperties (will mix with system env, sytem properties)
+     * Load properties from multiple Files, in order of resolution
+     * @param input the files to load from
+     * @return The EnvAwareProperties
      * @throws IOException If IO Exception happened
      */
     public static EnvAwareProperties fromFile(java.io.File... input) throws IOException {
@@ -107,8 +122,8 @@ public class EnvAwareProperties extends Properties {
     }
 
     /**
-     * Load properties from inputStream
-     * @param is the stream to load from
+     * Load properties from inputStreams
+     * @param is the streams to load from
      * @return EnvAwareProperties (will mix with system env, sytem properties)
      * @throws IOException If IO Exception happened
      */
@@ -135,7 +150,7 @@ public class EnvAwareProperties extends Properties {
     }
 
     /**
-     * Load properties from classpath
+     * Load properties from classpaths
      * @param path Path of classpath
      * @return EnvAwareProperties (will mix with system env, sytem properties)
      * @throws IOException If IO Exception happened
@@ -213,10 +228,23 @@ public class EnvAwareProperties extends Properties {
         }
     }
 
+    /**
+     * Get property with resolution. By default, the getProperty doesn't work well if your key has
+     * ${var} placeholders. If you want to resolve that key as well, use this method instead.
+     * @param key The key to resolve. Key may contain place holders like ${key}
+     * @return The resolved property
+     */
     public String getPropertyResolve(String key) {
         return getPropertyResolve(key, null);
     }
 
+    /**
+     * Get property with resolution. By default, the getProperty doesn't work well if your key has
+     * ${var} placeholders. If you want to resolve that key as well, use this method instead.
+     * @param key The key to resolve. Key may contain place holders like ${key}
+     * @param defaultValue When key is not found, the defaultValue is returned
+     * @return The resolved property
+     */
     public String getPropertyResolve(String key, String defaultValue) {
         String keyResolved = resolveEnv(key, this);
         String valueRaw = this.getProperty(keyResolved);
@@ -227,25 +255,31 @@ public class EnvAwareProperties extends Properties {
         return result;
     }
 
+    /**
+     * Sample use cases
+     * @param args command line argument
+     */
     public static void main(String[] args) {
-        Properties dict = new Properties();
-        dict.put("key.1", "${key.2}");
-        dict.put("key.2", "${key.1}");
+        Properties dict1 = new Properties();
+        dict1.put("key.1", "${key.2}");
+        dict1.put("key.2", "${key.1}");
 
-        Properties dic1 = new Properties();
-        dic1.put("key.1", "value.3");
-        dic1.put("key.3", "value.3");
-        dic1.put("key1", "${key2}");
-        dic1.put("key2", "${key3}");
-        dic1.put("key3", "The real key1 value is here");
+        Properties dict2 = new Properties();
+        dict2.put("key.1", "value.3"); // key.1 is shadowed by dict
+        dict2.put("key.3", "value.3");
+        dict2.put("key1", "${key2}");
+        dict2.put("key2", "${key3}");
+        dict2.put("key3", "The real key1 value is here");
 
-        Properties dic2 = new Properties();
-        dic2.put("key.1", "value.32");
-        dic2.put("key.33", "java.class.path");
-        dic2.put("key.44", "${${key.33}}");
-        dic2.put("appDir", "${user.home}/app01/config");
+        Properties dict3 = new Properties();
+        dict3.put("key.1", "value.32"); // key.1 is shadowed by dict1, it is useless here
+        dict3.put("key.33", "java.class.path"); // key.33 is plain text value java.class.path
+        dict3.put("key.44", "${${key.33}}"); // key.44 is value of variable referenced by key.33,
+        // so it is ${java.class.path}, and it
+        // is resolved to java.class.path environment variable
+        dict3.put("appDir", "${user.home}/app01/config"); // appDir might be resolved to /home/ubuntu/app01/config, for example
 
-        EnvAwareProperties ep = new EnvAwareProperties(dict, dic1, dic2);
+        EnvAwareProperties ep = new EnvAwareProperties(dict1, dict2, dict3);
         System.out.println(ep.getProperty("key.1")); //shows ${key.2} since it has a circular reference!
         System.out.println(ep.getProperty("key1")); //show "The real key1 value is here" since it is resolved!
         System.out.println(ep.getProperty("user.home")); // shows user home directory

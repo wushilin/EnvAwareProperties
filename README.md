@@ -33,24 +33,26 @@ This is for you!
 Usage:
 
 ```java
-        Properties dict = new Properties();
-        dict.put("key.1", "${key.2}");
-        dict.put("key.2", "${key.1}");
+        Properties dict1 = new Properties();
+        dict1.put("key.1", "${key.2}");
+        dict1.put("key.2", "${key.1}");
 
-        Properties dic1 = new Properties();
-        dic1.put("key.1", "value.3");
-        dic1.put("key.3", "value.3");
-        dic1.put("key1", "${key2}");
-        dic1.put("key2", "${key3}");
-        dic1.put("key3", "The real key1 value is here");
+        Properties dict2 = new Properties();
+        dict2.put("key.1", "value.3"); // key.1 is shadowed by dict
+        dict2.put("key.3", "value.3");
+        dict2.put("key1", "${key2}");
+        dict2.put("key2", "${key3}");
+        dict2.put("key3", "The real key1 value is here");
 
-        Properties dic2 = new Properties();
-        dic2.put("key.1", "value.32");
-        dic2.put("key.33", "java.class.path");
-        dic2.put("key.44", "${${key.33}}");
-        dic2.put("appDir", "${user.home}/app01/config");
+        Properties dict3 = new Properties();
+        dict3.put("key.1", "value.32"); // key.1 is shadowed by dict1, it is useless here
+        dict3.put("key.33", "java.class.path"); // key.33 is plain text value java.class.path
+        dict3.put("key.44", "${${key.33}}"); // key.44 is value of variable referenced by key.33,
+        // so it is ${java.class.path}, and it
+        // is resolved to java.class.path environment variable
+        dict3.put("appDir", "${user.home}/app01/config"); // appDir might be resolved to /home/ubuntu/app01/config, for example
 
-        EnvAwareProperties ep = new EnvAwareProperties(dict, dic1, dic2);
+        EnvAwareProperties ep = new EnvAwareProperties(dict1, dict2, dict3);
         System.out.println(ep.getProperty("key.1")); //shows ${key.2} since it has a circular reference!
         System.out.println(ep.getProperty("key1")); //show "The real key1 value is here" since it is resolved!
         System.out.println(ep.getProperty("user.home")); // shows user home directory
