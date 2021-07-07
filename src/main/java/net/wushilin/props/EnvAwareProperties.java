@@ -287,7 +287,7 @@ public class EnvAwareProperties extends Properties {
         System.out.println(ep.getProperty("user.home")); // shows user home directory
         System.out.println(ep.getProperty("key.44")); // shows value of env java.class.path, it resolves the chain!
         System.out.println(ep.getProperty("appDir")); // shows your_home_dir/app01/config
-        for(var next:ep.entrySet()) {
+        for(Map.Entry next:ep.entrySet()) {
             System.out.println(next.getKey() + " => " + next.getValue());
             //Lists everything including the dict, dic1, dic2, sysEnv, sysProps!
             // Order of importance dict > dic1 > dic2 > sysProps > sysEnv!
