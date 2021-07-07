@@ -7,6 +7,7 @@ An environment aware properties
 Ever wanted to use my.property=${HOME}/config?
 This is for you!
 
+
 2. Ever wanted to have placeholder like variable in properties?
 BASE_DIR=/tmp/base
 APP_BINARY=${BASE_DIR}/bin
