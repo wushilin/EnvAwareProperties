@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,6 +41,9 @@ public class EnvAwareProperties extends Properties {
         List<Object> extraKeys = new ArrayList<>();
         List<Properties> extraList = new ArrayList<>();
 
+        extraList.add(fromCurrentDirectoryEnv());
+        extraList.add(fromHomeEnv());
+        extraList.add(fromRootEnv());
         extraList.add(sysProps());
         extraList.add(sysEnv());
         for(Properties next:list) {
@@ -72,6 +76,28 @@ public class EnvAwareProperties extends Properties {
         for(Object extraK:extraKeys) {
             remove(extraK);
         }
+    }
+
+    private Properties fromRootEnv() {
+        return loadFile(new File("/.jproperties"));
+    }
+
+    private Properties fromHomeEnv() {
+        return loadFile(new File(System.getenv("HOME") + "/.jproperties"));
+    }
+
+    private Properties loadFile(File file) {
+        Properties prop = new Properties();
+        if(file != null && file.isFile() && file.exists() && file.canRead() && file.length() > 0) {
+            try(FileInputStream fis = new FileInputStream(file)) {
+                prop.load(fis);
+            } catch (IOException e) {
+            }
+        }
+        return prop;
+    }
+    private Properties fromCurrentDirectoryEnv() {
+        return loadFile(new File(".jproperties"));
     }
 
     /**
@@ -263,14 +289,16 @@ public class EnvAwareProperties extends Properties {
         Properties dict1 = new Properties();
         dict1.put("key.1", "${key.2}");
         dict1.put("key.2", "${key.1}");
-
+        dict1.put("java.class.path", "${PATH}/ABC");
         System.out.println("Hello, world");
         
         Properties dict2 = new Properties();
         dict2.put("key.1", "value.3"); // key.1 is shadowed by dict
         dict2.put("key.3", "value.3");
+        dict1.put("SPECIAL", "special3");
         dict2.put("key1", "${key2}");
         dict2.put("key2", "${key3}");
+        dict1.put("special", "${SPECIAL}");
         dict2.put("key3", "The real key1 value is here");
 
         Properties dict3 = new Properties();
