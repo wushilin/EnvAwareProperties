@@ -79,4 +79,19 @@ Usage:
             // Order of importance dict > dic1 > dic2 > sysProps > sysEnv!
         }
 
+
+       // Or simply, load multiple files
+       Properties p = EnvAwareProperties.fromPath("/path/to/p1", "/path/to/p2");
+	
+			 // Or simply, load from classpath
+       Properties p = EnvAwareProperties.fromFile(new File("/path/to/p1"), new File("/path/to/p2"));
+ 
+       // Or load from input stream
+       Properties p = EnvAwareProperties.fromInputStream(is1, is2, is3);
+
+			 // Or from classPath
+       Properties p = EnvAwareProperties.fromClassPath("/resources/p1.properties", "/resources/p2.properties");
+			
+			 // In the above configs, the properties are resolved in the order. Most important properties loads first
+
 ```
