@@ -1,22 +1,8 @@
 # EnvAwareProperties
-An environment aware properties
-
-
-# Change log
-## v1.0.1 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
-1. Added auto load of $current_directory/.jproperties, $HOME/.jproperties, /.jproperties in order, if they present, and is readable, and is not empty
-2. The above properties has priority over sysProperties, and sysEnv. sysProperties has priority over sysEnv.
-3. You can't nest more than 500 levels. 
-```
-K1 = ${K2}
-K2 = ${K1}
-```
-This will not resolve, but will not cause error too. K1 = literal of ("${K2}")
-
 # What problems does this code solve?
 1. Environment aware properties.
 
-Ever wanted to use my.property=${HOME}/config? This is for you!
+Ever wanted to use `config.base.directory=${HOME}/config`? This is for you!
 
 
 2. Ever wanted to have placeholder like variable in properties?
@@ -35,14 +21,51 @@ key=${${K1}}
 =>
 key=K3
 ```
+
+4. Ever wanted to automatically resolve environment variable in config?
+```
+# Assume you launch tomcat with java -Dtomcat.runtime.version=9.0 xxxxx
+APP_HOME=${HOME}/${USER}/config-${tomcat.runtime.version}
+TOMCAT_VERSION=${tomcat.runtime.version}
+```
+
 This is for you!
 
-```
-Note: This resolves statically. That means all keys are expanded to their value at initialization.
+All keys are resolved at initialization. At runtime, this has zero overhead!
 
-Note: If you want to access key with resolution, use .getPropertyResolve(String key) instead. Here key can contain sth like "some${suffix}" where suffix is defined in properties.
+If you want to access key with resolution, you can call .getPropertyResolve(String key).
+Here key can contain sth like "some${suffix}" where suffix is defined in properties.
 
-Note: When constructing, the priority of resolution is by the order of properties in constructor.
+It supports loading properties from multiple source, with preference of order of resolution.
+
+It expands the Properties values that contains ${tag} automatically.
+
+If a tag contains another tag (e.g. ${tag${id}}, it resolves id then tagwith id)
+
+It supports autoload of System environment, system properties (-Djava.xxx.xxx=xxx),
+./.jproperties, /.jproperties, /home/<user>/.jproperties as resolution candidates.
+
+The resolution order is:
+1. It looks for the EnvAwareProperties.newBuilder() override keys if specified
+2. It looks for ./.properties file (current directory)
+3. It looks for $HOME/.jproperties
+4. It looks for /.jproperties
+5. It looks for System properties (specified by -Dsome.key=some.value)
+6. It looks for System environment variable
+
+If you do not want to load the above files, please use a builder, and call the disableXXX before building.
+
+For example
+```java
+EnvAwareProperties props = EnvAwareProperties.newBuilder()
+        .disableHomeJProperties()
+        .disableCwdJProperties()
+        .disableRootJProperties()
+        .disableEnvironment()
+        .disableSysProperties()
+        .override("mykey", "myvalue")
+        .thenAddPropertiesFilePath("testdata/test3.properties", "testdata/test4.properties")
+        .build();
 ```
 
 Usage:
@@ -95,3 +118,29 @@ Usage:
 			 // In the above configs, the properties are resolved in the order. Most important properties loads first
 
 ```
+
+# Change log
+## v1.0.2 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
+1. Added builder function
+```java
+        Properties defaultP5 = EnvAwareProperties.newBuilder()
+                .thenAddPropertiesFilePath("testdata/test3.properties")
+                .thenAddPropertiesFile(new File("testdata/test2.properties"))
+                .thenAddInputStream(new FileInputStream("testdata/test1.properties"))
+                .override("key", "value")
+                .build();
+        // Note you should close the inputstream yourself.
+```
+
+2. Revised resolution order
+
+3. Added test case
+## v1.0.1 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
+1. Added auto load of $current_directory/.jproperties, $HOME/.jproperties, /.jproperties in order, if they present, and is readable, and is not empty
+2. The above properties has priority over sysProperties, and sysEnv. sysProperties has priority over sysEnv.
+3. You can't nest more than 500 levels. 
+```
+K1 = ${K2}
+K2 = ${K1}
+```
+This will not resolve, but will not cause error too. K1 = literal of ("${K2}")

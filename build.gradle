@@ -7,7 +7,7 @@ plugins {
 
 group 'net.wushilin'
 archivesBaseName = "envawareproperties"
-version '1.0.1'
+version '1.0.2'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -15,6 +15,8 @@ repositories {
     mavenCentral()
 }
 dependencies {
+    testImplementation(platform('org.junit:junit-bom:5.9.0'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
 }
 
 java {
@@ -92,4 +94,8 @@ artifacts {
 
 signing {
     sign publishing.publications.mavenJava
+}
+
+test {
+    useJUnitPlatform()
 }

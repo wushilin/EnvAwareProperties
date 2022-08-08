@@ -1,1 +1,4 @@
 SPECIAL=special2
+ENV1=A long story with ENV1
+ENV2=Many history for ENV2
+ENV3=Pure love from ENV3
