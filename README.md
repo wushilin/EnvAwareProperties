@@ -40,8 +40,6 @@ It supports loading properties from multiple source, with preference of order of
 
 It expands the Properties values that contains ${tag} automatically.
 
-If a tag contains another tag (e.g. ${tag${id}}, it resolves id then tagwith id)
-
 It supports autoload of System environment, system properties (-Djava.xxx.xxx=xxx),
 ./.jproperties, /.jproperties, /home/<user>/.jproperties as resolution candidates.
 
