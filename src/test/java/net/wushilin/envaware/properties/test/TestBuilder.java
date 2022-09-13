@@ -98,5 +98,11 @@ public class TestBuilder {
                 .override("keytest123", "${k1}").build();
         System.out.println(defaultP7);
         System.out.println(defaultP7.getPropertyResolve("key${${k2value1}}"));
+
+        EnvAwareProperties defaultP8 = EnvAwareProperties.newBuilder().thenAddPropertiesFilePath("testdata/defaultp8.properties").build();
+        System.out.println(defaultP8.partition("root"));
+        System.out.println(defaultP8.partition("root."));
+        System.out.println(defaultP8.partition("root").partition("ns1"));
+        System.out.println(defaultP8.partition("root.").partition("ns2."));
     }
 }

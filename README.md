@@ -118,6 +118,22 @@ Usage:
 ```
 
 # Change log
+## v1.0.3 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
+1. Added a partition function for envaware properties
+```java
+EnvAwareProperties p = ...;
+// root.ns1.key1=value1
+// root.ns1.key2=value2
+// root.ns2.key1=value1_diff
+// root.ns2.key2=value2_diff
+// other=other_value
+EnvAwareProperties root = p.partition("root");
+// ns1.key1, ns1.key2, ns2.key1, ns2.key2 <= valid keys in root
+EnvAwareProperties ns1 = root.partition("ns1."); // '.' suffix is optional
+// key1, key2 <= valid keys for ns1
+
+EnvAwareProperties ns1new = p.partition("root.ns1."); // same!
+```
 ## v1.0.2 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
 1. Added builder function
 ```java

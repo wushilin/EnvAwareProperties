@@ -578,6 +578,31 @@ public class EnvAwareProperties extends Properties {
             // Order of importance dict > dic1 > dic2 > sysProps > sysEnv!
         }
     }
+
+    /**
+     * Partition this properties with the prefix.
+     * Properties that starts with prefix + ".": prefix + "." is removed, and put into result
+     * Properties that does not start with prefix + "." are ignored
+     *
+     * @param prefix A prefix to partition by. If prefix is not ending with ".", a "." will be appended.
+     * @return Sub properties
+     */
+    public EnvAwareProperties partition(String prefix) {
+        if(!prefix.endsWith(".")) {
+            prefix = prefix + ".";
+        }
+        Set<Object> keys = this.keySet();
+        Properties result = new Properties();
+        for(Object nextO:keys) {
+            String key = (String)nextO;
+            if(key.startsWith(prefix)) {
+                String newKey = key.substring(prefix.length());
+                String value = this.getProperty(key);
+                result.put(newKey, value);
+            }
+        }
+        return new EnvAwareProperties(result);
+    }
 }
 
 /**
