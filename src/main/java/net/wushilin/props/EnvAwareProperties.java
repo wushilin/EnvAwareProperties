@@ -507,7 +507,13 @@ public class EnvAwareProperties extends Properties {
     }
 
     /**
-     * Load the properties from current directory
+     * Load the properties from the 2 locations in order:
+     * 1. ./config/application.properties
+     * 2 ./application.properties
+     * If #1 is found, #2 is ignored. if #1 is not found, #2 is used.
+     * If both #1 and #2 are not found, exception thrown.
+     * The following environments, together with system environment, system properties, are also used for lookups for
+     * place holder variables. e.g. ${USER}, ${HOME}
      * ${cwd}/.jproperties
      * ${HOME}/.jproperties
      * /.jproperties
@@ -515,9 +521,20 @@ public class EnvAwareProperties extends Properties {
      * @return The default EnvAwareProperties
      */
     public static EnvAwareProperties defaultProperties() {
-        return EnvAwareProperties.newBuilder().thenAddPropertiesFilePath("application.properties").build();
+        String []toLoad = new String[]{"./config/application.properties", "./application.properties"};
+        for(String next:toLoad) {
+            try{
+                return EnvAwareProperties.newBuilder().thenAddPropertiesFilePath(next).build();
+            } catch(Exception ex) {
+            }
+        }
+        throw new IllegalArgumentException("None of ./config/application.properties and ./application.properties exists. (cwd = " + System.getProperty("user.dir") + ")");
     }
 
+    private static boolean canLoad(String path) {
+        File file = new File(path);
+        return file.exists() && file.isFile() && file.canRead();
+    }
     /**
      * Get property with resolution. By default, the getProperty doesn't work well if your key has
      * ${var} placeholders. If you want to resolve that key as well, use this method instead.

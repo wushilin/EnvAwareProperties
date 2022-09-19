@@ -26,6 +26,8 @@ public class TestBuilder {
     }
     @Test
     public void doTestBuilder() throws FileNotFoundException {
+        System.out.println(EnvAwareProperties.defaultProperties());
+
         Properties defaultP = EnvAwareProperties.newBuilder().override("k1", "${ENV1}").build();
         assertEquals(defaultP.getProperty("k1"), "A long story with ENV1");
         assertEquals(defaultP.keySet().size(), 1);
