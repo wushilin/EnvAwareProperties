@@ -50,6 +50,9 @@ public class EnvAwareProperties extends Properties {
          */
         private Properties overrides;
 
+        /**
+         * Default constructor
+         */
         public Builder() {
             target = new ArrayList<Object>();
             enableCwdJProperties = true;
@@ -63,7 +66,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable all lookup loading
-         * @return
+         * @return self
          */
         public Builder disableAllJProperties() {
             return this.disableCwdJProperties().disableHomeJProperties().disableRootJProperties();
@@ -71,7 +74,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable lookup loading from home directory
-         * @return
+         * @return self
          */
         public Builder disableHomeJProperties() {
             this.enableHomeJProperties = false;
@@ -80,7 +83,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable lookup loading from root
-         * @return
+         * @return self
          */
         public Builder disableRootJProperties() {
             this.enableRootJProperties = false;
@@ -89,7 +92,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable lookup loading from current working directory
-         * @return
+         * @return self
          */
         public Builder disableCwdJProperties() {
             this.enableCwdJProperties = false;
@@ -98,7 +101,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable lookup loading from system environment variables
-         * @return
+         * @return self
          */
         public Builder disableEnvironment() {
             this.enableEnvironment = false;
@@ -107,7 +110,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Disable lookup from system properties
-         * @return
+         * @return self
          */
         public Builder disableSysProperties() {
             this.enableSysProperties = false;
@@ -116,7 +119,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Enable lookup from all properties locations
-         * @return
+         * @return self
          */
         public Builder enableAllJProperties() {
             return this.enableCwdJProperties().enableHomeJProperties().enableRootJProperties();
@@ -124,7 +127,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Enable lookup from home
-         * @return
+         * @return self
          */
         public Builder enableHomeJProperties() {
             this.enableHomeJProperties = true;
@@ -133,7 +136,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Enable lookup from root
-         * @return
+         * @return self
          */
         public Builder enableRootJProperties() {
             this.enableRootJProperties = true;
@@ -142,7 +145,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Enable lookup from current working directory
-         * @return
+         * @return self
          */
         public Builder enableCwdJProperties() {
             this.enableCwdJProperties = true;
@@ -163,7 +166,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Remove a override by key
          * @param key The key to remove
-         * @return
+         * @return self
          */
         public Builder deleteOverride(String key) {
             this.overrides.remove(key);
@@ -172,13 +175,17 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Remove all overrides
-         * @return
+         * @return self
          */
         public Builder clearOverrides() {
             this.overrides.clear();
             return this;
         }
 
+        /**
+         * Enable environment loading
+         * @return self
+         */
         public Builder enableEnvironment() {
             this.enableEnvironment = true;
             return this;
@@ -186,7 +193,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Enable loading of system properties
-         * @return
+         * @return self
          */
         public Builder enableSysProperties() {
             this.enableSysProperties = true;
@@ -196,7 +203,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add a request to load by input stream
          * @param istreams The input streams to load
-         * @return
+         * @return self
          */
         public Builder thenAddInputStream(InputStream... istreams) {
             for (InputStream istream : istreams) {
@@ -208,7 +215,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add readers to the end
          * @param readers Readers to load from
-         * @return
+         * @return self
          */
         public Builder thenAddReader(Reader... readers) {
             for (Reader reader : readers)
@@ -219,7 +226,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add properties files
          * @param files Files to be added to the end.
-         * @return
+         * @return self
          */
         public Builder thenAddPropertiesFile(File... files) {
             Builder result = this;
@@ -233,7 +240,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add properties object
          * @param p Properties to load
-         * @return
+         * @return self
          */
         public Builder thenAddProperties(Properties... p) {
             for (Properties next : p) {
@@ -245,7 +252,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add map to the target
          * @param p Properties to load
-         * @return
+         * @return self
          */
         public Builder thenAddMap(Map<String, String>... p) {
             for (Map<String, String> next : p) {
@@ -257,7 +264,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add properties to files
          * @param files The files to read in order
-         * @return
+         * @return self
          */
         public Builder thenAddPropertiesFilePath(String... files) {
             Builder result = this;
@@ -270,7 +277,7 @@ public class EnvAwareProperties extends Properties {
         /**
          * Add properties from classpath
          * @param classpaths Classpath list
-         * @return
+         * @return self
          */
         public Builder thenAddPropertiesFromClasspath(String... classpaths) {
             for (String classpath : classpaths) {
@@ -281,7 +288,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Undo whatever had been added so far, but keeping the overrides
-         * @return
+         * @return self
          */
         public Builder removeAll() {
             this.target.clear();
@@ -290,7 +297,7 @@ public class EnvAwareProperties extends Properties {
 
         /**
          * Build the properties
-         * @return
+         * @return self
          */
         public EnvAwareProperties build() {
             return new EnvAwareProperties(this.enableCwdJProperties, this.enableHomeJProperties, this.enableRootJProperties, this.enableEnvironment, this.enableSysProperties, target);
@@ -299,7 +306,7 @@ public class EnvAwareProperties extends Properties {
 
     /**
      * Return a new builder
-     * @return
+     * @return self
      */
     public static Builder newBuilder() {
         return new Builder();
