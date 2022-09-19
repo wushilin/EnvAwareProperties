@@ -311,10 +311,27 @@ public class EnvAwareProperties extends Properties {
      */
     private static final int MAX_DEPTH = 500;
 
+    /**
+     * Flag to control if cwd loading of .properties
+     */
     private boolean enableCwdJProperties = true;
+
+    /**
+     * Flag to control if home loading of .properties
+     */
     private boolean enableHomeJProperties = true;
+
+    /**
+     * Flag to control if root loading of .properties
+     */
     private boolean enableRootJProperties = true;
+    /**
+     * Flag to control Environment loading is enabled
+     */
     private boolean enableEnvironment = true;
+    /**
+     * Flag to control sys properties loading is enabled
+     */
     private boolean enableSysProperties = true;
 
     private EnvAwareProperties(boolean enableCwdJProperties, boolean enableHomeJProperties,
