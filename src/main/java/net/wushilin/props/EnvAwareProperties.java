@@ -682,9 +682,18 @@ public class EnvAwareProperties extends Properties {
             } catch(Exception ex) {
             }
         }
-        throw new IllegalArgumentException("None of ./config/application.properties and ./application.properties exists. (cwd = " + System.getProperty("user.dir") + ")");
+        throw new IllegalArgumentException("None of [" +String.join(", ", toLoad) + "] exists. (cwd = " + System.getProperty("user.dir") + ")");
     }
 
+
+    /**
+     * Merge with another EnvAwareProperties. Other has lower priority.
+     * @param other The other EnvAwareProperties to merge
+     * @return The merged EnvAwareProperties
+     */
+    public EnvAwareProperties merge(EnvAwareProperties other) {
+        return EnvAwareProperties.newBuilder().thenAddProperties(this, other).build();
+    }
     private static boolean canLoad(String path) {
         File file = new File(path);
         return file.exists() && file.isFile() && file.canRead();

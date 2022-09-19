@@ -25,8 +25,8 @@ public class TestBuilder {
     public void afterEach() {
     }
     @Test
-    public void doTestBuilder() throws FileNotFoundException {
-        System.out.println(EnvAwareProperties.defaultProperties());
+    public void doTestBuilder() throws IOException {
+        System.out.println(EnvAwareProperties.fromPath("testdata/test1.properties").merge(EnvAwareProperties.fromPath("testdata/defaultp8.properties")));
 
         Properties defaultP = EnvAwareProperties.newBuilder().override("k1", "${ENV1}").build();
         assertEquals(defaultP.getProperty("k1"), "A long story with ENV1");

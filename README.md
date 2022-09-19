@@ -118,6 +118,9 @@ Usage:
 ```
 
 # Change log
+## v1.06  (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
+1. Added EnvAwareProperties.merge(EnvAwareProperties other) to merge. other has lower priority
+
 ## v1.0.5 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
 1. Added EnvAwareProperties.defaultProperties() that will load `./config/application.properties` or `./application.properties`
 2. Added javadoc for the behavior
