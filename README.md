@@ -118,6 +118,10 @@ Usage:
 ```
 
 # Change log
+## v1.0.5 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
+1. Added EnvAwareProperties.defaultProperties() that will load `./config/application.properties` or `./application.properties`
+2. Added javadoc for the behavior
+
 ## v1.0.3 (maven repo https://mvnrepository.com/artifact/net.wushilin/envawareproperties)
 1. Added a partition function for envaware properties
 ```java
