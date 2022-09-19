@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
  * does a little bit of magic!
  */
 public class EnvAwareProperties extends Properties {
+    /**
+     * Builder class for This class
+     */
     public static class Builder {
         /**
          * Holds the list of targets
