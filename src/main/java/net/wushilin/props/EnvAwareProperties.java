@@ -507,6 +507,18 @@ public class EnvAwareProperties extends Properties {
     }
 
     /**
+     * Load the properties from current directory
+     * ${cwd}/.jproperties
+     * ${HOME}/.jproperties
+     * /.jproperties
+     * will be loaded if they are present too
+     * @return The default EnvAwareProperties
+     */
+    public static EnvAwareProperties defaultProperties() {
+        return EnvAwareProperties.newBuilder().thenAddPropertiesFilePath("application.properties").build();
+    }
+
+    /**
      * Get property with resolution. By default, the getProperty doesn't work well if your key has
      * ${var} placeholders. If you want to resolve that key as well, use this method instead.
      *
