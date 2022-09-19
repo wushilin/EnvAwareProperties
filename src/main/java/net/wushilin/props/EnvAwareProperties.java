@@ -21,12 +21,33 @@ import java.util.stream.Collectors;
  */
 public class EnvAwareProperties extends Properties {
     public static class Builder {
+        /**
+         * Holds the list of targets
+         */
         private List<Object> target;
+        /**
+         * Whether or not load .properties from current directory
+         */
         private boolean enableCwdJProperties;
+        /**
+         * Whether or not load .properties from current user's home directory
+         */
         private boolean enableHomeJProperties;
+        /**
+         * whether or not load .properties from root directory
+         */
         private boolean enableRootJProperties;
+        /**
+         * Whether or not load from system environment
+         */
         private boolean enableEnvironment;
+        /**
+         * Whether or not load from system properties
+         */
         private boolean enableSysProperties;
+        /**
+         * The explicit overrides
+         */
         private Properties overrides;
 
         public Builder() {
@@ -40,64 +61,119 @@ public class EnvAwareProperties extends Properties {
             target.add(overrides);
         }
 
+        /**
+         * Disable all lookup loading
+         * @return
+         */
         public Builder disableAllJProperties() {
             return this.disableCwdJProperties().disableHomeJProperties().disableRootJProperties();
         }
 
+        /**
+         * Disable lookup loading from home directory
+         * @return
+         */
         public Builder disableHomeJProperties() {
             this.enableHomeJProperties = false;
             return this;
         }
 
+        /**
+         * Disable lookup loading from root
+         * @return
+         */
         public Builder disableRootJProperties() {
             this.enableRootJProperties = false;
             return this;
         }
 
+        /**
+         * Disable lookup loading from current working directory
+         * @return
+         */
         public Builder disableCwdJProperties() {
             this.enableCwdJProperties = false;
             return this;
         }
 
+        /**
+         * Disable lookup loading from system environment variables
+         * @return
+         */
         public Builder disableEnvironment() {
             this.enableEnvironment = false;
             return this;
         }
 
+        /**
+         * Disable lookup from system properties
+         * @return
+         */
         public Builder disableSysProperties() {
             this.enableSysProperties = false;
             return this;
         }
 
+        /**
+         * Enable lookup from all properties locations
+         * @return
+         */
         public Builder enableAllJProperties() {
             return this.enableCwdJProperties().enableHomeJProperties().enableRootJProperties();
         }
 
+        /**
+         * Enable lookup from home
+         * @return
+         */
         public Builder enableHomeJProperties() {
             this.enableHomeJProperties = true;
             return this;
         }
 
+        /**
+         * Enable lookup from root
+         * @return
+         */
         public Builder enableRootJProperties() {
             this.enableRootJProperties = true;
             return this;
         }
 
+        /**
+         * Enable lookup from current working directory
+         * @return
+         */
         public Builder enableCwdJProperties() {
             this.enableCwdJProperties = true;
             return this;
         }
 
+        /**
+         * Add override paraemter
+         * @param key Property key
+         * @param value Property value
+         * @return The builder itself
+         */
         public Builder override(String key, String value) {
             this.overrides.setProperty(key, value);
             return this;
         }
 
+        /**
+         * Remove a override by key
+         * @param key The key to remove
+         * @return
+         */
         public Builder deleteOverride(String key) {
             this.overrides.remove(key);
             return this;
         }
 
+        /**
+         * Remove all overrides
+         * @return
+         */
         public Builder clearOverrides() {
             this.overrides.clear();
             return this;
@@ -108,11 +184,20 @@ public class EnvAwareProperties extends Properties {
             return this;
         }
 
+        /**
+         * Enable loading of system properties
+         * @return
+         */
         public Builder enableSysProperties() {
             this.enableSysProperties = true;
             return this;
         }
 
+        /**
+         * Add a request to load by input stream
+         * @param istreams The input streams to load
+         * @return
+         */
         public Builder thenAddInputStream(InputStream... istreams) {
             for (InputStream istream : istreams) {
                 this.target.add(istream);
@@ -120,12 +205,22 @@ public class EnvAwareProperties extends Properties {
             return this;
         }
 
+        /**
+         * Add readers to the end
+         * @param readers Readers to load from
+         * @return
+         */
         public Builder thenAddReader(Reader... readers) {
             for (Reader reader : readers)
                 this.target.add(reader);
             return this;
         }
 
+        /**
+         * Add properties files
+         * @param files Files to be added to the end.
+         * @return
+         */
         public Builder thenAddPropertiesFile(File... files) {
             Builder result = this;
 
@@ -135,6 +230,11 @@ public class EnvAwareProperties extends Properties {
             return result;
         }
 
+        /**
+         * Add properties object
+         * @param p Properties to load
+         * @return
+         */
         public Builder thenAddProperties(Properties... p) {
             for (Properties next : p) {
                 this.target.add(next);
@@ -142,6 +242,11 @@ public class EnvAwareProperties extends Properties {
             return this;
         }
 
+        /**
+         * Add map to the target
+         * @param p Properties to load
+         * @return
+         */
         public Builder thenAddMap(Map<String, String>... p) {
             for (Map<String, String> next : p) {
                 this.target.add(p);
@@ -149,6 +254,11 @@ public class EnvAwareProperties extends Properties {
             return this;
         }
 
+        /**
+         * Add properties to files
+         * @param files The files to read in order
+         * @return
+         */
         public Builder thenAddPropertiesFilePath(String... files) {
             Builder result = this;
             for (String next : files) {
@@ -157,6 +267,11 @@ public class EnvAwareProperties extends Properties {
             return result;
         }
 
+        /**
+         * Add properties from classpath
+         * @param classpaths Classpath list
+         * @return
+         */
         public Builder thenAddPropertiesFromClasspath(String... classpaths) {
             for (String classpath : classpaths) {
                 this.target.add(classpath);
@@ -164,16 +279,28 @@ public class EnvAwareProperties extends Properties {
             return this;
         }
 
+        /**
+         * Undo whatever had been added so far, but keeping the overrides
+         * @return
+         */
         public Builder removeAll() {
             this.target.clear();
             return this;
         }
 
+        /**
+         * Build the properties
+         * @return
+         */
         public EnvAwareProperties build() {
             return new EnvAwareProperties(this.enableCwdJProperties, this.enableHomeJProperties, this.enableRootJProperties, this.enableEnvironment, this.enableSysProperties, target);
         }
     }
 
+    /**
+     * Return a new builder
+     * @return
+     */
     public static Builder newBuilder() {
         return new Builder();
     }
