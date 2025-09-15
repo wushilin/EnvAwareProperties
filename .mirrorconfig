@@ -1,0 +1,2 @@
+ssh_cmd="ssh -i ~/.ssh/id_ed25519"
+ssh_target=wushilin@baba.wushilin.net:workspace/EnvAwareProperties

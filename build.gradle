@@ -1,15 +1,11 @@
 plugins {
-    id 'maven-publish'
-	  id 'signing'
     id 'java-library'
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id 'maven-publish'
+    id 'signing'
 }
 
-group 'net.wushilin'
-archivesBaseName = "envawareproperties"
-version '1.0.6'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+group="net.wushilin"
+version="1.0.7"
 
 repositories {
     mavenCentral()
@@ -22,61 +18,8 @@ dependencies {
 java {
     withJavadocJar()
     withSourcesJar()
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            //stagingProfileId = sonatypeStagingProfileId
-            username = "${System.env.ossrhUsername}"
-            password = "${System.env.ossrhPassword}"
-	    nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-        }
-    }
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = 'envawareproperties'
-            from components.java
-            versionMapping {
-                usage('java-api') {
-                    fromResolutionOf('runtimeClasspath')
-                }
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
-            pom {
-                name = 'Environment Variable Aware Properties'
-                description = 'A Properties that supports variable resolution'
-                url = 'https://github.com/wushilin/envawareproperties'
-                properties = [
-                    myProp: "value",
-                    "prop.with.dots": "anotherValue"
-                ]
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'wushilin'
-                        name = 'Wu Shilin'
-                        email = 'wushilin.sg@gmail.com'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git://github.com/wushilin/envawareproperties.git'
-                    developerConnection = 'scm:git:git://github.com/wushilin/envawareproperties.git'
-                    url = 'https://github.com/wushilin/envawareproperties'
-                }
-            }
-        }
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
     }
 }
 
@@ -92,10 +35,73 @@ artifacts {
 }
 
 
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java   // include the JAR
+
+            pom {
+                name.set("EnvAwareProperties")
+                description.set("Env Aware Properties")
+                url.set("https://github.com/wushilin/envawareproperties")
+
+                licenses {
+                    license {
+                        name.set("Apache License 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("wushilin")
+                        name.set("Wu Shilin")
+                        email.set("wushilin.sg@gmail.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/wushilin/envawareproperties.git")
+                    developerConnection.set("scm:git:ssh://github.com:wushilin/envawareproperties.git")
+                    url.set("https://github.com/wushilin/envawareproperties")
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri("${buildDir}/repo")
+        }
+    }
+}
+
+
+
 signing {
+    useInMemoryPgpKeys(
+            System.getenv("GPG_KEY_ID"),
+            System.getenv("GPG_SECRET"),
+            System.getenv("GPG_PASSPHRASE"),
+    )
     sign publishing.publications.mavenJava
 }
 
-test {
-    useJUnitPlatform()
+tasks.register('zipRepo', Zip) {
+    group = 'distribution'
+    description = 'Zip the local Maven repo after publishing'
+
+    from layout.buildDirectory.dir('repo')
+    archiveFileName.set('maven-repo-net.zip')
+    destinationDirectory.set(layout.buildDirectory.dir('distributions'))
+}
+
+def tasksToFinalize = ['publish', 'publishAllPublicationsToMavenRepository']
+
+tasksToFinalize.each { taskName ->
+    tasks.named(taskName) {
+        finalizedBy(tasks.named('zipRepo'))
+    }
 }
